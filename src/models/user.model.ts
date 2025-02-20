@@ -1,7 +1,7 @@
-import mongoose, { Types } from 'mongoose';
-import { IUser } from '../types/user-model';
+import mongoose, { Schema } from 'mongoose';
+import { UserModel } from '../types/user-model';
 
-const userSchema = new mongoose.Schema<IUser>(
+const userSchema = new Schema<UserModel>(
   {
     email: {
       type: String,

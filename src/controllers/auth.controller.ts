@@ -3,7 +3,7 @@ import User from '../models/user.model';
 import bcrypt from 'bcryptjs';
 import asyncHandler from 'express-async-handler';
 import { generateToken } from '../utils/generate-token';
-import { IUser } from '../types/user-model';
+import { UserModel } from '../types/user-model';
 import { AuthRequest } from '../types/auth-request';
 import cloudinary from '../utils/cloudinary';
 
@@ -58,7 +58,7 @@ export const signup = asyncHandler(
 export const login = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    const user: IUser | null = await User.findOne({ email });
+    const user: UserModel | null = await User.findOne({ email });
     if (!user) {
       res.status(400).json({ message: 'Invalide Credentials' });
       return;
