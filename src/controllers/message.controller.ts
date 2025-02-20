@@ -57,6 +57,8 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
     await newMessage.save();
 
+    // TODO: Handle the instant message receive with socket.io
+
     res.status(201).json(newMessage);
   } catch (error: unknown) {
     console.log('Error in sendMessage: ', (error as Error).message);
