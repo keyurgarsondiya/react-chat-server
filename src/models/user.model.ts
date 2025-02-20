@@ -1,6 +1,7 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
+import { IUser } from '../types/user-model';
 
-const userSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema<IUser>(
   {
     email: {
       type: String,

@@ -3,6 +3,9 @@ import User from '../models/user.model';
 import bcrypt from 'bcryptjs';
 import asyncHandler from 'express-async-handler';
 import { generateToken } from '../utils/generate-token';
+import { IUser } from '../types/user-model';
+import { AuthRequest } from '../types/auth-request';
+import cloudinary from '../utils/cloudinary';
 
 export const signup = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
@@ -33,7 +36,7 @@ export const signup = asyncHandler(
 
       if (newUser) {
         //   generate JWT token
-        generateToken(String(newUser._id), res);
+        generateToken(newUser._id, res);
         await newUser.save();
 
         res.status(201).json({
@@ -52,10 +55,75 @@ export const signup = asyncHandler(
   },
 );
 
-export const login = asyncHandler((req: Request, res: Response) => {
-  res.send({ message: 'User Login', status: 200 });
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    const user: IUser | null = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({ message: 'Invalide Credentials' });
+      return;
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      res.status(400).json({ message: 'Invalide Credentials' });
+      return;
+    }
+
+    generateToken(user._id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
+  } catch (error: unknown) {
+    console.log('Error in login controller ', (error as Error).message);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
 export const logout = asyncHandler((req: Request, res: Response) => {
-  res.send({ message: 'User Logout', status: 200 });
+  try {
+    res.cookie('jwt', '', {
+      maxAge: 0,
+    });
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error: unknown) {
+    console.log('Error in logout controller ', (error as Error).message);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  try {
+    const { profilePic } = req.body;
+    const userId = (req as AuthRequest).user._id;
+
+    if (!profilePic) {
+      res.status(400).json({ message: 'Profile pic is required' });
+    }
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: uploadResponse.secure_url },
+      { new: true },
+    );
+
+    res.status(200).json(updateUser);
+  } catch (error: unknown) {
+    console.log('Error in update profile: ', (error as Error).message);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+export const checkAuth = asyncHandler(async (req, res) => {
+  try {
+    res.status(200).json((req as AuthRequest).user);
+  } catch (error) {
+    console.log('Error in chec auth: ', (error as Error).message);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
