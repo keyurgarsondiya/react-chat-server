@@ -3,7 +3,7 @@ import User from '../models/user.model';
 import bcrypt from 'bcryptjs';
 import asyncHandler from 'express-async-handler';
 import { generateToken } from '../utils/generate-token';
-import { IUser } from '../types/user-model';
+import { UserModel } from '../types/user-model';
 import { AuthRequest } from '../types/auth-request';
 import cloudinary from '../utils/cloudinary';
 
@@ -58,7 +58,7 @@ export const signup = asyncHandler(
 export const login = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    const user: IUser | null = await User.findOne({ email });
+    const user: UserModel | null = await User.findOne({ email });
     if (!user) {
       res.status(400).json({ message: 'Invalide Credentials' });
       return;
@@ -121,7 +121,12 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
 export const checkAuth = asyncHandler(async (req, res) => {
   try {
-    res.status(200).json((req as AuthRequest).user);
+    const user = (req as AuthRequest).user;
+    console.log('User: ', user);
+    res.status(200).json({
+      ...user,
+      unauthorized: false,
+    });
   } catch (error) {
     console.log('Error in chec auth: ', (error as Error).message);
     res.status(500).json({ message: 'Internal Server Error' });
