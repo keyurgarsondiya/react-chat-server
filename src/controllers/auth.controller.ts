@@ -121,7 +121,12 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
 export const checkAuth = asyncHandler(async (req, res) => {
   try {
-    res.status(200).json((req as AuthRequest).user);
+    const user = (req as AuthRequest).user;
+    console.log('User: ', user);
+    res.status(200).json({
+      ...user,
+      unauthorized: false,
+    });
   } catch (error) {
     console.log('Error in chec auth: ', (error as Error).message);
     res.status(500).json({ message: 'Internal Server Error' });
