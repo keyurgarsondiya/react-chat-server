@@ -13,16 +13,19 @@ export const signup = asyncHandler(
     try {
       if (!fullName || !email || !password) {
         res.status(400).json({ message: 'All mandatory fields are required' });
+        return;
       }
       if (password.length < 6) {
         res
           .status(400)
           .json({ message: 'Password must be atleast 6 characters long' });
+        return;
       }
 
       const user = await User.findOne({ email });
       if (user) {
         res.status(400).json({ message: 'User already exists' });
+        return;
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -35,9 +38,10 @@ export const signup = asyncHandler(
       });
 
       if (newUser) {
+        await newUser.save();
+
         //   generate JWT token
         generateToken(newUser._id, res);
-        await newUser.save();
 
         res.status(201).json({
           _id: newUser._id,
@@ -66,7 +70,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      res.status(400).json({ message: 'Invalide Credentials' });
+      res.status(400).json({ message: 'Invalid Credentials' });
       return;
     }
 
@@ -123,10 +127,7 @@ export const checkAuth = asyncHandler(async (req, res) => {
   try {
     const user = (req as AuthRequest).user;
     console.log('User: ', user);
-    res.status(200).json({
-      ...user,
-      unauthorized: false,
-    });
+    res.status(200).json(user);
   } catch (error) {
     console.log('Error in chec auth: ', (error as Error).message);
     res.status(500).json({ message: 'Internal Server Error' });
